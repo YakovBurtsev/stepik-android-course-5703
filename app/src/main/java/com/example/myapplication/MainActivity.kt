@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import com.google.gson.Gson
+import com.squareup.picasso.Picasso
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
@@ -94,5 +95,6 @@ class RecyclerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         descriptionView.text = feedItem.description
 
         val thumbnailView = itemView.findViewById<ImageView>(R.id.item_thumbnail)
+        Picasso.with(thumbnailView.context).load(feedItem.thumbnail).into(thumbnailView)
     }
 }
