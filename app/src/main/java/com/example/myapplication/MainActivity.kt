@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import com.google.gson.Gson
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -88,5 +89,10 @@ class RecyclerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     fun bind(feedItem: FeedItem) {
         val titleView = itemView.findViewById<TextView>(R.id.item_title)
         titleView.text = feedItem.title
+
+        val descriptionView = itemView.findViewById<TextView>(R.id.item_description)
+        descriptionView.text = feedItem.description
+
+        val thumbnailView = itemView.findViewById<ImageView>(R.id.item_thumbnail)
     }
 }
