@@ -1,5 +1,7 @@
 package com.example.myapplication
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
@@ -96,5 +98,11 @@ class RecyclerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         val thumbnailView = itemView.findViewById<ImageView>(R.id.item_thumbnail)
         Picasso.with(thumbnailView.context).load(feedItem.thumbnail).into(thumbnailView)
+
+        itemView.setOnClickListener {
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.data = Uri.parse(feedItem.link)
+            thumbnailView.context.startActivity(intent)
+        }
     }
 }
