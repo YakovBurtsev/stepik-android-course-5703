@@ -1,14 +1,13 @@
 package com.example.myapplication
 
-import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.BaseAdapter
-import android.widget.ListView
 import android.widget.TextView
 import com.google.gson.Gson
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -17,25 +16,25 @@ import io.reactivex.schedulers.Schedulers
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var helloWorldTextView: TextView
-    private lateinit var listView: ListView
+    private lateinit var recyclerView: RecyclerView
     var httpRequestResult: Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        listView = findViewById(R.id.act1_ListView)
+        recyclerView = findViewById(R.id.main_act_recycler_view)
 
+        val url = "https://api.rss2json.com/v1/api.json?rss_url=http%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml"
         val observable =
-            createRequest("https://api.rss2json.com/v1/api.json?rss_url=http%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml")
+            createRequest(url)
                 .map { Gson().fromJson(it, Feed::class.java) }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
 
         httpRequestResult = observable.subscribe({
             //result handling
-            showListView(it.items)
+            showRecyclerView(it.items)
         }, {
             //error handling
             Log.e("test", "", it)
@@ -43,17 +42,11 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    fun showListView(feedList: ArrayList<FeedItem>) {
-        listView.adapter = Adapter(feedList)
+    private fun showRecyclerView(feedItems: ArrayList<FeedItem>) {
+        recyclerView.adapter = RecyclerViewAdapter(feedItems)
+        recyclerView.layoutManager = LinearLayoutManager(this)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        data?.let {
-            helloWorldTextView.text = data.getStringExtra("editedText")
-        }
-    }
 
     override fun onDestroy() {
         httpRequestResult?.dispose()
@@ -70,25 +63,30 @@ class FeedItem(
     val description: String
 )
 
-class Adapter(val items: ArrayList<FeedItem>) : BaseAdapter() {
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
 
+class RecyclerViewAdapter(val feedItems: ArrayList<FeedItem>) : RecyclerView.Adapter<RecyclerViewHolder>() {
+
+    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): RecyclerViewHolder {
         val inflater = LayoutInflater.from(parent!!.context)
-        val view = convertView ?: inflater.inflate(R.layout.list_item, parent, false)
-        val item = getItem(position) as FeedItem
-        view.findViewById<TextView>(R.id.item_title).text = item.title
-        return view
+        val itemView = inflater.inflate(R.layout.list_item, parent, false)
+        return RecyclerViewHolder(itemView)
     }
 
-    override fun getItem(position: Int): Any {
-        return items[position]
+    override fun getItemCount(): Int {
+        return feedItems.size
     }
 
-    override fun getItemId(position: Int): Long {
-        return position.toLong()
-    }
+    override fun onBindViewHolder(holder: RecyclerViewHolder?, position: Int) {
+        val feedItem = feedItems[position]
+        holder?.bind(feedItem)
 
-    override fun getCount(): Int {
-        return items.size
+    }
+}
+
+class RecyclerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+
+    fun bind(feedItem: FeedItem) {
+        val titleView = itemView.findViewById<TextView>(R.id.item_title)
+        titleView.text = feedItem.title
     }
 }
