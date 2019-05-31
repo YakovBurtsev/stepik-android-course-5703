@@ -1,6 +1,7 @@
 package com.example.myapplication
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -44,6 +45,14 @@ class MainActivity : AppCompatActivity() {
             Log.e("test", "", it)
         })
 
+    }
+
+    override fun onSaveInstanceState(outState: Bundle?) {
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
     }
 
     private fun showRecyclerView(feedItems: ArrayList<FeedItem>) {
