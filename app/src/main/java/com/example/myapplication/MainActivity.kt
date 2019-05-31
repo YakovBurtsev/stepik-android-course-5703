@@ -18,6 +18,9 @@ import com.squareup.picasso.Picasso
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import io.realm.Realm
+import io.realm.RealmList
+import io.realm.RealmObject
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,16 +36,31 @@ class MainActivity : AppCompatActivity() {
         val url = "https://api.rss2json.com/v1/api.json?rss_url=http%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml"
         val observable =
             createRequest(url)
-                .map { Gson().fromJson(it, Feed::class.java) }
+                .map { Gson().fromJson(it, FeedAPI::class.java) }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
 
         httpRequestResult = observable.subscribe({
             //result handling
-            showRecyclerView(it.items)
+            val feed = Feed(
+                it.items.mapTo(
+                    RealmList(),
+                    { f -> FeedItem(f.title, f.link, f.thumbnail, f.description) })
+            )
+
+            Realm.getDefaultInstance().executeTransaction { realm ->
+                val oldFeeds = realm.where(Feed::class.java).findAll()
+                oldFeeds.forEach { oldFeed ->
+                    oldFeed.deleteFromRealm()
+                }
+                realm.copyToRealm(feed)
+            }
+
+            showRecyclerView()
         }, {
             //error handling
             Log.e("test", "", it)
+            showRecyclerView()
         })
 
     }
@@ -55,9 +73,17 @@ class MainActivity : AppCompatActivity() {
         super.onConfigurationChanged(newConfig)
     }
 
-    private fun showRecyclerView(feedItems: ArrayList<FeedItem>) {
-        recyclerView.adapter = RecyclerViewAdapter(feedItems)
-        recyclerView.layoutManager = LinearLayoutManager(this)
+    private fun showRecyclerView() {
+        //getting from DB
+        Realm.getDefaultInstance().executeTransaction {realm ->
+
+        val feeds = realm.where(Feed::class.java).findAll()
+            if (feeds.size > 0) {
+                recyclerView.adapter = RecyclerViewAdapter(feeds[0]!!.items)
+                recyclerView.layoutManager = LinearLayoutManager(this)
+
+            }
+        }
     }
 
 
@@ -67,17 +93,30 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-class Feed(val items: ArrayList<FeedItem>)
+//dto classes
 
-class FeedItem(
+class FeedAPI(val items: ArrayList<FeedItemAPI>)
+
+class FeedItemAPI(
     val title: String,
     val link: String,
     val thumbnail: String,
     val description: String
 )
 
+//domain classes (for DB)
 
-class RecyclerViewAdapter(val feedItems: ArrayList<FeedItem>) : RecyclerView.Adapter<RecyclerViewHolder>() {
+open class Feed(var items: RealmList<FeedItem> = RealmList<FeedItem>()) : RealmObject()
+
+open class FeedItem(
+    var title: String = "",
+    var link: String = "",
+    var thumbnail: String = "",
+    var description: String = ""
+) : RealmObject()
+
+
+class RecyclerViewAdapter(val feedItems: RealmList<FeedItem>) : RecyclerView.Adapter<RecyclerViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): RecyclerViewHolder {
         val inflater = LayoutInflater.from(parent!!.context)
@@ -90,9 +129,8 @@ class RecyclerViewAdapter(val feedItems: ArrayList<FeedItem>) : RecyclerView.Ada
     }
 
     override fun onBindViewHolder(holder: RecyclerViewHolder?, position: Int) {
-        val feedItem = feedItems[position]
+        val feedItem = feedItems[position]!!
         holder?.bind(feedItem)
-
     }
 }
 
