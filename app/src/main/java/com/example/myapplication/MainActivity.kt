@@ -1,95 +1,48 @@
 package com.example.myapplication
 
 import android.content.Intent
-import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import com.google.gson.Gson
 import com.squareup.picasso.Picasso
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
-import io.realm.Realm
 import io.realm.RealmList
 import io.realm.RealmObject
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var recyclerView: RecyclerView
-    var httpRequestResult: Disposable? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_fragment)
 
-        recyclerView = findViewById(R.id.main_act_recycler_view)
-
-        val url = "https://api.rss2json.com/v1/api.json?rss_url=http%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml"
-        val observable =
-            createRequest(url)
-                .map { Gson().fromJson(it, FeedAPI::class.java) }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-
-        httpRequestResult = observable.subscribe({
-            //result handling
-            val feed = Feed(
-                it.items.mapTo(
-                    RealmList(),
-                    { f -> FeedItem(f.title, f.link, f.thumbnail, f.description) })
-            )
-
-            Realm.getDefaultInstance().executeTransaction { realm ->
-                val oldFeeds = realm.where(Feed::class.java).findAll()
-                oldFeeds.forEach { oldFeed ->
-                    oldFeed.deleteFromRealm()
-                }
-                realm.copyToRealm(feed)
-            }
-
-            showRecyclerView()
-        }, {
-            //error handling
-            Log.e("test", "", it)
-            showRecyclerView()
-        })
-
-    }
-
-    override fun onSaveInstanceState(outState: Bundle?) {
-        super.onSaveInstanceState(outState)
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration?) {
-        super.onConfigurationChanged(newConfig)
-    }
-
-    private fun showRecyclerView() {
-        //getting from DB
-        Realm.getDefaultInstance().executeTransaction {realm ->
-
-        val feeds = realm.where(Feed::class.java).findAll()
-            if (feeds.size > 0) {
-                recyclerView.adapter = RecyclerViewAdapter(feeds[0]!!.items)
-                recyclerView.layoutManager = LinearLayoutManager(this)
-
-            }
+        if (savedInstanceState == null) {
+            val bundle = Bundle()
+            bundle.putString("param", "value")
+            val fragment = MainFragment()
+            fragment.arguments = bundle
+            supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.fragment_place, fragment)
+                .commitAllowingStateLoss()
         }
     }
 
+    fun showArticle(url: String) {
+        val bundle = Bundle()
+        bundle.putString("url", url)
+        val fragment = SecondFragment()
+        fragment.arguments = bundle
 
-    override fun onDestroy() {
-        httpRequestResult?.dispose()
-        super.onDestroy()
+        supportFragmentManager
+            .beginTransaction()
+            .add(R.id.fragment_place, fragment)
+            .addToBackStack("main")
+            .commitAllowingStateLoss()
     }
 }
 
@@ -147,9 +100,7 @@ class RecyclerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         Picasso.with(thumbnailView.context).load(feedItem.thumbnail).into(thumbnailView)
 
         itemView.setOnClickListener {
-            val intent = Intent(Intent.ACTION_VIEW)
-            intent.data = Uri.parse(feedItem.link)
-            thumbnailView.context.startActivity(intent)
+            (thumbnailView.context as MainActivity).showArticle(feedItem.link)
         }
     }
 }
