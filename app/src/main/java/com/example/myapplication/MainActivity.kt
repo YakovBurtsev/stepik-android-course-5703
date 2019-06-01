@@ -1,7 +1,5 @@
 package com.example.myapplication
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.RecyclerView
@@ -38,11 +36,20 @@ class MainActivity : AppCompatActivity() {
         val fragment = SecondFragment()
         fragment.arguments = bundle
 
-        supportFragmentManager
-            .beginTransaction()
-            .add(R.id.fragment_place, fragment)
-            .addToBackStack("main")
-            .commitAllowingStateLoss()
+        val frame2 = findViewById<View>(R.id.fragment_place2)
+        if (frame2 != null) {
+            frame2.visibility = View.VISIBLE
+            supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.fragment_place2, fragment)
+                .commitAllowingStateLoss()
+        } else {
+            supportFragmentManager
+                .beginTransaction()
+                .add(R.id.fragment_place, fragment)
+                .addToBackStack("main")
+                .commitAllowingStateLoss()
+        }
     }
 }
 
