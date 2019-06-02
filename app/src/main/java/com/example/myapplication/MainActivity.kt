@@ -53,7 +53,7 @@ class FeedItemAPI(
 
 //domain classes (for DB)
 
-open class Feed(var items: RealmList<FeedItem> = RealmList<FeedItem>()) : RealmObject()
+open class Feed(var items: RealmList<FeedItem> = RealmList()) : RealmObject()
 
 open class FeedItem(
     var title: String = "",
