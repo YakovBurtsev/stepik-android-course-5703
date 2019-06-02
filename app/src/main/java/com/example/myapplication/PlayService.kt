@@ -9,6 +9,7 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.IBinder
 import android.support.v4.app.NotificationCompat
+import java.util.*
 
 class PlayService : Service() {
 
@@ -19,7 +20,6 @@ class PlayService : Service() {
 
         val notificationId = 333
         val stopAction = "stop"
-
 
         if (intent?.action == stopAction) {
             player?.stop()
@@ -33,7 +33,26 @@ class PlayService : Service() {
         val url = intent!!.extras!!.getString("mp3")
         player = MediaPlayer()
         player?.setDataSource(this, Uri.parse(url))
-        player?.setOnPreparedListener { p -> p.start() }
+        player?.setOnPreparedListener { p ->
+            if (p != player)
+                return@setOnPreparedListener
+            p.start()
+
+            val timer = Timer()
+            timer.schedule(object : TimerTask() {
+                override fun run() {
+                    if (!p.isPlaying) {
+                        timer.cancel()
+                        return
+                    }
+                    notificationBuilder?.setContentText("${p.currentPosition / 1000} sek / ${p.duration / 1000}")
+                    (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(
+                        notificationId,
+                        notificationBuilder?.build()
+                    )
+                }
+            }, 1000, 1000)
+        }
         player?.prepareAsync()
 
         val notificationIntent = Intent(
