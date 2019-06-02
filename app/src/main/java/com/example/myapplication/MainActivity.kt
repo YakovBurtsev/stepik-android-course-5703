@@ -66,8 +66,8 @@ open class FeedItem(
 
 class RecyclerViewAdapter(val feedItems: RealmList<FeedItem>) : RecyclerView.Adapter<RecyclerViewHolder>() {
 
-    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): RecyclerViewHolder {
-        val inflater = LayoutInflater.from(parent!!.context)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
         val itemView = inflater.inflate(R.layout.list_item, parent, false)
         return RecyclerViewHolder(itemView)
     }
@@ -76,9 +76,9 @@ class RecyclerViewAdapter(val feedItems: RealmList<FeedItem>) : RecyclerView.Ada
         return feedItems.size
     }
 
-    override fun onBindViewHolder(holder: RecyclerViewHolder?, position: Int) {
+    override fun onBindViewHolder(holder: RecyclerViewHolder, position: Int) {
         val feedItem = feedItems[position]!!
-        holder?.bind(feedItem)
+        holder.bind(feedItem)
     }
 }
 
