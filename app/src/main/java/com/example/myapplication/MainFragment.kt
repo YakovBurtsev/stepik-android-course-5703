@@ -38,7 +38,7 @@ class MainFragment : Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        val url = "https://api.rss2json.com/v1/api.json?rss_url=http%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml"
+        val url = "https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Ffeeds.twit.tv%2Fbrickhouse.xml"
         val observable =
             createRequest(url)
                 .map { Gson().fromJson(it, FeedAPI::class.java) }
@@ -50,7 +50,7 @@ class MainFragment : Fragment() {
             val feed = Feed(
                 it.items.mapTo(
                     RealmList(),
-                    { f -> FeedItem(f.title, f.link, f.thumbnail, f.description) })
+                    { f -> FeedItem(f.title, f.link, f.thumbnail, f.description, f.guid) })
             )
 
             Realm.getDefaultInstance().executeTransaction { realm ->

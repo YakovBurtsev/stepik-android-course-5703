@@ -1,8 +1,10 @@
 package com.example.myapplication
 
+import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.RecyclerView
+import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -30,26 +32,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun showArticle(url: String) {
-        val bundle = Bundle()
-        bundle.putString("url", url)
-        val fragment = SecondFragment()
-        fragment.arguments = bundle
-
-        val frame2 = findViewById<View>(R.id.fragment_place2)
-        if (frame2 != null) {
-            frame2.visibility = View.VISIBLE
-            supportFragmentManager
-                .beginTransaction()
-                .replace(R.id.fragment_place2, fragment)
-                .commitAllowingStateLoss()
-        } else {
-            supportFragmentManager
-                .beginTransaction()
-                .add(R.id.fragment_place, fragment)
-                .addToBackStack("main")
-                .commitAllowingStateLoss()
-        }
+    fun playMusic(url: String) {
+        val intent = Intent(this, PlayService::class.java)
+        intent.putExtra("mp3", url)
+        startService(intent)
     }
 }
 
@@ -61,7 +47,8 @@ class FeedItemAPI(
     val title: String,
     val link: String,
     val thumbnail: String,
-    val description: String
+    val description: String,
+    val guid: String
 )
 
 //domain classes (for DB)
@@ -72,7 +59,8 @@ open class FeedItem(
     var title: String = "",
     var link: String = "",
     var thumbnail: String = "",
-    var description: String = ""
+    var description: String = "",
+    var guid: String = ""
 ) : RealmObject()
 
 
@@ -101,13 +89,13 @@ class RecyclerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         titleView.text = feedItem.title
 
         val descriptionView = itemView.findViewById<TextView>(R.id.item_description)
-        descriptionView.text = feedItem.description
+        descriptionView.text = Html.fromHtml(feedItem.description)
 
         val thumbnailView = itemView.findViewById<ImageView>(R.id.item_thumbnail)
         Picasso.with(thumbnailView.context).load(feedItem.thumbnail).into(thumbnailView)
 
         itemView.setOnClickListener {
-            (thumbnailView.context as MainActivity).showArticle(feedItem.link)
+            (thumbnailView.context as MainActivity).playMusic(feedItem.guid)
         }
     }
 }
